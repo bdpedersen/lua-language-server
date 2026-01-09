@@ -28,6 +28,30 @@ static int get_int_field(lua_State* L, int index, const char* field) {
     return value;
 }
 
+// Manually open standard libraries since bee.lua uses custom openlibs
+static void openlibs(lua_State* L) {
+    luaL_requiref(L, "_G", luaopen_base, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "package", luaopen_package, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "coroutine", luaopen_coroutine, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "table", luaopen_table, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "io", luaopen_io, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "os", luaopen_os, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "string", luaopen_string, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "math", luaopen_math, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "utf8", luaopen_utf8, 1);
+    lua_pop(L, 1);
+    luaL_requiref(L, "debug", luaopen_debug, 1);
+    lua_pop(L, 1);
+}
+
 luals_engine_t* luals_engine_create(const char* workspace_path) {
     luals_engine_t* engine = malloc(sizeof(luals_engine_t));
     if (!engine) return NULL;
@@ -39,7 +63,7 @@ luals_engine_t* luals_engine_create(const char* workspace_path) {
         return NULL;
     }
     
-    luaL_openlibs(engine->L);
+    openlibs(engine->L);
     
     // Set package path to include LuaLS directories
     lua_getglobal(engine->L, "package");
@@ -48,7 +72,7 @@ luals_engine_t* luals_engine_create(const char* workspace_path) {
     
     char new_path[2048];
     snprintf(new_path, sizeof(new_path),
-             "%s;./embedded/?.lua;./embedded/adapter/?.lua;./script/?.lua",
+             "%s;./bin/embedded/?.lua;./bin/embedded/adapter/?.lua;./script/?.lua;./script/?/init.lua",
              current_path);
     
     lua_pop(engine->L, 1);
@@ -57,8 +81,8 @@ luals_engine_t* luals_engine_create(const char* workspace_path) {
     lua_pop(engine->L, 1);
     
     // Load embedded module
-    if (luaL_dofile(engine->L, "embedded/init.lua") != LUA_OK) {
-        fprintf(stderr, "Failed to load embedded/init.lua: %s\n",
+    if (luaL_dofile(engine->L, "bin/embedded/init.lua") != LUA_OK) {
+        fprintf(stderr, "Failed to load bin/embedded/init.lua: %s\n",
                 lua_tostring(engine->L, -1));
         lua_close(engine->L);
         free(engine);
