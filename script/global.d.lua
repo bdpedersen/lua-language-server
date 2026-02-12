@@ -95,6 +95,11 @@ jit = false
 ---@type integer
 SOCKET = 0
 
+---path to script root (script/, meta/, locale/, etc.), use command line: --resource-dir="/path"
+---When set, overrides default ROOT derivation. For resource bundles.
+---@type string
+RESOURCE_DIR = ''
+
 -- Allowing the use of the root directory or home directory as the workspace
 FORCE_ACCEPT_WORKSPACE = false
 

@@ -1,3 +1,18 @@
+-- Pre-pass: extract --resource-dir for root (used when building package.path)
+local resourceDir
+for i = 1, #arg do
+    local v = arg[i]
+    local val = v:match('^%-%-resource%-dir=(.+)$')
+    if val then
+        resourceDir = val
+        break
+    end
+    if v == '--resource-dir' and arg[i + 1] then
+        resourceDir = arg[i + 1]
+        break
+    end
+end
+
 local main, exec
 local i = 1
 while arg[i] do
@@ -10,7 +25,7 @@ while arg[i] do
         exec = true
     elseif not main and arg[i]:sub(1, 1) ~= '-' then
         main = i
-    elseif arg[i]:sub(1, 2) == '--' then
+    elseif arg[i] == '--' then
         break
     end
     i = i + 1
@@ -39,13 +54,24 @@ end
 
 local root
 do
-    if main then
+    if resourceDir and resourceDir ~= '' then
+        local fs = require 'bee.filesystem'
+        root = fs.absolute(fs.path(resourceDir)):string()
+        if root == '' then
+            root = '.'
+        end
+        root = root:gsub('[/\\]', package.config:sub(1, 1))
+        if not main then
+            arg[0] = root .. package.config:sub(1, 1) .. 'main.lua'
+        end
+    elseif main then
         local fs = require 'bee.filesystem'
         local mainPath = fs.path(arg[0])
         root = mainPath:parent_path():string()
         if root == '' then
             root = '.'
         end
+        root = root:gsub('[/\\]', package.config:sub(1, 1))
     else
         local sep = package.config:sub(1, 1)
         if sep == '\\' then
@@ -54,8 +80,8 @@ do
         local pattern = "[" .. sep .. "]+[^" .. sep .. "]+"
         root = package.cpath:match("([^;]+)" .. pattern .. pattern .. "$")
         arg[0] = root .. package.config:sub(1, 1) .. 'main.lua'
+        root = root:gsub('[/\\]', package.config:sub(1, 1))
     end
-    root = root:gsub('[/\\]', package.config:sub(1, 1))
 end
 
 package.path = table.concat({

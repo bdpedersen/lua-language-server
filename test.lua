@@ -67,6 +67,7 @@ local function test(name)
 end
 
 local function testAll()
+    test 'resource_dir'
     test 'basic'
     test 'parser_test'
     test 'definition'

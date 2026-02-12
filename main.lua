@@ -45,11 +45,16 @@ end
 
 loadArgs()
 
-local currentPath = debug.getinfo(1, 'S').source:sub(2)
-local rootPath    = currentPath:gsub('[/\\]*[^/\\]-$', '')
+local rootPath
+if RESOURCE_DIR and RESOURCE_DIR ~= '' then
+    rootPath = util.expandPath(RESOURCE_DIR)
+else
+    local currentPath = debug.getinfo(1, 'S').source:sub(2)
+    rootPath = currentPath:gsub('[/\\]*[^/\\]-$', '')
+    rootPath = (rootPath == '' and '.' or rootPath)
+end
 
-rootPath = (rootPath == '' and '.' or rootPath)
-ROOT     = fs.path(util.expandPath(rootPath))
+ROOT = fs.path(rootPath)
 LOGPATH  = LOGPATH  and util.expandPath(LOGPATH)  or (ROOT:string() .. '/log')
 METAPATH = METAPATH and util.expandPath(METAPATH) or (ROOT:string() .. '/meta')
 
