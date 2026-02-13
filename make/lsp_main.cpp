@@ -115,14 +115,33 @@ static constexpr std::string_view bootstrap = R"BOOTSTRAP(
         file:close()
         return load(str, "=(main.lua)")
     end
-    local sys = require "bee.sys"
+    local root
+    for i = 1, #arg do
+        local v = arg[i]
+        local val = v:match("^%-%-resource%-dir=(.+)$")
+        if val then
+            root = val
+            break
+        end
+        if v == "--resource-dir" and arg[i + 1] then
+            root = arg[i + 1]
+            break
+        end
+    end
+    if not root or root == "" then
+        error("--resource-dir or --resource-dir=<path> is required. Pass the directory containing main.lua and script/.")
+    end
+    root = root:gsub("[/\\]", package.config:sub(1, 1))
+    if root == "" then root = "." end
+    _G.RESOURCE_DIR = root
+    local sep = package.config:sub(1, 1)
+    local mainlua = root .. sep .. "main.lua"
+    package.path = (root .. sep .. "script" .. sep .. "?.lua;" .. root .. sep .. "script" .. sep .. "?" .. sep .. "init.lua"):gsub("/", sep)
     local platform = require "bee.platform"
-    local progdir = sys.exe_path():parent_path()
-    local mainlua = (progdir / "main.lua"):string()
     if platform.os == "windows" then
-        package.cpath = (progdir / "?.dll"):string()
+        package.cpath = (root .. sep .. "?.dll"):gsub("/", sep)
     else
-        package.cpath = (progdir / "?.so"):string()
+        package.cpath = (root .. sep .. "?.so"):gsub("/", sep)
     end
     assert(loadfile(mainlua))(...)
 )BOOTSTRAP";
