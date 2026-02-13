@@ -1,7 +1,25 @@
-local fw    = require 'bee.filewatch'
+local plat = require 'bee.platform'
+local fw
+if plat.os == 'ios' then
+    -- iOS: native filewatch excluded (FSEventStream/inotify not available)
+    fw = {
+        create = function()
+            return setmetatable({}, {
+                __index = {
+                    add = function() end,
+                    set_recursive = function() end,
+                    set_follow_symlinks = function() return false end,
+                    set_filter = function() return false end,
+                    select = function() return nil, nil end,
+                }
+            })
+        end
+    }
+else
+    fw = require 'bee.filewatch'
+end
 local fs    = require 'bee.filesystem'
 local sys   = require 'bee.sys'
-local plat  = require 'bee.platform'
 local await = require 'await'
 local files = require 'files'
 

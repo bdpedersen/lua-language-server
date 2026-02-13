@@ -55,6 +55,10 @@ lm:source_set "source_bootstrap_lib" {
         defines = "LUA_USE_MACOSX",
         links = { "m", "dl" },
     },
+    ios = {
+        defines = "LUA_USE_IOS",
+        links = "m",
+    },
     linux = {
         defines = "LUA_USE_LINUX",
         links = { "m", "dl" },
