@@ -180,6 +180,9 @@ function m.eventLoop()
 
     local function sleep()
         while true do
+            if INPROCESS and LSP_SHUTDOWN then
+                return
+            end
             idle()
             for _ = 1, 10 do
                 net.update(100)
@@ -192,6 +195,9 @@ function m.eventLoop()
     end
 
     while true do
+        if INPROCESS and LSP_SHUTDOWN then
+            break
+        end
         net.update()
         log.debug('net update')
         local clock = time.monotonic()

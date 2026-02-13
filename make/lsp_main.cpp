@@ -74,6 +74,27 @@ static void createargtable(lua_State* L, char** argv, int argc) {
     lua_setglobal(L, "arg");
 }
 
+/** When os.exit(code, true) is called in inprocess mode, set flag and return (event loop will break). */
+static int lsp_exit_patch(lua_State* L) {
+    (void)luaL_optinteger(L, 1, 0);
+    int close = lua_toboolean(L, 2);
+    if (close) {
+        lua_pushboolean(L, 1);
+        lua_setglobal(L, "LSP_SHUTDOWN");
+        return 0;
+    }
+    return 0;
+}
+
+static void patch_os_exit(lua_State* L) {
+    lua_getglobal(L, "os");
+    if (lua_istable(L, -1)) {
+        lua_pushcfunction(L, lsp_exit_patch);
+        lua_setfield(L, -2, "exit");
+    }
+    lua_pop(L, 1);
+}
+
 static int pushargs(lua_State* L) {
     if (lua_getglobal(L, "arg") != LUA_TTABLE)
         luaL_error(L, "'arg' is not a table");
@@ -87,6 +108,7 @@ static int pushargs(lua_State* L) {
 
 static constexpr std::string_view bootstrap = R"BOOTSTRAP(
     INPROCESS = true
+    LSP_SHUTDOWN = false
     local function loadfile(filename)
         local file  = assert(io.open(filename))
         local str  = file:read "a"
@@ -122,6 +144,7 @@ static int pmain_lsp(lua_State* L) {
     lua_setfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
     luaL_openlibs(L);
     createargtable(L, argv, argc);
+    patch_os_exit(L);  /* os.exit(code, true) -> error(LSP_SHUTDOWN) so LSPMain returns */
     lua_gc(L, LUA_GCGEN, 0, 0);
     if (run_bootstrap(L) != LUA_OK)
         return 0;
