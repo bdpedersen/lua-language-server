@@ -271,7 +271,9 @@ function m.start()
     if COMPILECORES and COMPILECORES > 0 then
         pub.recruitBraves(COMPILECORES, 'compile')
     end
-    if SOCKET then
+    if INPROCESS then
+        proto.listen('inprocess')
+    elseif SOCKET then
         assert(math.tointeger(SOCKET), '`socket` must be integer')
         proto.listen('socket', SOCKET)
     else

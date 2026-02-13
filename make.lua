@@ -32,12 +32,54 @@ lm:source_set 'lpeglabel' {
     deps = "source_lua",
 }
 
+lm:source_set "source_transport" {
+    rootdir = ".",
+    includes = {
+        "3rd/bee.lua",
+        "3rd/bee.lua/3rd/lua55",
+    },
+    sources = "make/transport.cpp",
+}
+
+lm:source_set "source_bootstrap_lib" {
+    rootdir = ".",
+    includes = {
+        "3rd/bee.lua",
+        "3rd/bee.lua/3rd/lua55",
+    },
+    sources = "3rd/bee.lua/bootstrap/bootstrap_init.cpp",
+    windows = {
+        deps = "bee_utf8_crt",
+    },
+    macos = {
+        defines = "LUA_USE_MACOSX",
+        links = { "m", "dl" },
+    },
+    linux = {
+        defines = "LUA_USE_LINUX",
+        links = { "m", "dl" },
+    },
+    netbsd = {
+        defines = "LUA_USE_LINUX",
+        links = "m",
+    },
+    freebsd = {
+        defines = "LUA_USE_LINUX",
+        links = "m",
+    },
+    openbsd = {
+        defines = "LUA_USE_LINUX",
+        links = "m",
+    },
+}
+
 lm:executable "lua-language-server" {
     deps = {
         "source_bee",
         "source_lua",
         "lpeglabel",
         "source_bootstrap",
+        "source_transport",
         includeCodeFormat and "code_format" or nil,
     },
     includes = {
@@ -67,6 +109,43 @@ lm:copy "copy_lua-language-server" {
     outputs = "bin/lua-language-server" .. exe,
 }
 
+lm:executable "lua-language-server-q" {
+    deps = {
+        "source_bee",
+        "source_lua",
+        "lpeglabel",
+        "source_bootstrap_lib",
+        "source_transport",
+        includeCodeFormat and "code_format" or nil,
+    },
+    includes = {
+        "3rd/bee.lua",
+        "3rd/bee.lua/3rd/lua55",
+    },
+    sources = {
+        "make/modules.cpp",
+        "make/lsp_main.cpp",
+        "make/lua-language-server-q-main.cpp",
+    },
+    windows = {
+        sources = {
+            "make/lua-language-server.rc",
+        },
+    },
+    defines = {
+        includeCodeFormat and 'CODE_FORMAT' or nil,
+    },
+    linux = {
+        crt = "static",
+        ldflags = { "-rdynamic" },
+    },
+}
+
+lm:copy "copy_lua-language-server-q" {
+    inputs = "$bin/lua-language-server-q" .. exe,
+    outputs = "bin/lua-language-server-q" .. exe,
+}
+
 lm:copy "copy_bootstrap" {
     inputs = "make/bootstrap.lua",
     outputs = "bin/main.lua",
@@ -81,6 +160,8 @@ lm:phony "all" {
     deps = {
         "lua-language-server",
         "copy_lua-language-server",
+        "lua-language-server-q",
+        "copy_lua-language-server-q",
         "copy_bootstrap",
     },
     windows = {

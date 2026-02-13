@@ -1,10 +1,10 @@
 local brave   = require 'brave.brave'
 
-brave.on('loadProtoByStdio', function ()
+brave.on('loadProto', function ()
     local jsonrpc = require 'jsonrpc'
+    local transport = require 'transport'
     while true do
-        local proto, err = jsonrpc.decode(io.read)
-        --log.debug('loaded proto', proto.method)
+        local proto, err = jsonrpc.decode(transport.read)
         if not proto then
             brave.push('protoerror', err)
             return

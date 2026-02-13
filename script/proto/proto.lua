@@ -51,8 +51,9 @@ end
 function m.send(data)
     local buf = jsonrpc.encode(data)
     logSend(buf)
-    if m.mode == 'stdio' then
-        io.write(buf)
+    if m.mode == 'stdio' or m.mode == 'inprocess' then
+        local transport = require 'transport'
+        transport.write(buf)
     elseif m.mode == 'socket' then
         m.client:write(buf)
     end
@@ -265,7 +266,12 @@ function m.listen(mode, socketPort)
         end
         io.stdin:setvbuf  'no'
         io.stdout:setvbuf 'no'
-        pub.task('loadProtoByStdio')
+        local transport = require 'transport'
+        transport.register_stdio()
+        pub.task('loadProto')
+    elseif mode == 'inprocess' then
+        log.info('Listen Mode: inprocess')
+        pub.task('loadProto')
     elseif mode == 'socket' then
         local unixFolder = LOGPATH .. '/unix'
         fs.create_directories(fs.path(unixFolder))
