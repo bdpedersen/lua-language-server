@@ -61,6 +61,9 @@ function m.start()
             if event & epoll.EPOLLIN ~= 0 then
                 local ok, name, id, params = reqPad:pop()
                 if ok then
+                    if name == 'shutdown' then
+                        return
+                    end
                     local ability = m.ability[name]
                     if not ability then
                         resPad:push(id)

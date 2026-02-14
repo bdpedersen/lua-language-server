@@ -176,6 +176,12 @@ void LSPDisconnect(void) {
 // Lua module
 #include <bee/lua/module.h>
 
+static int transport_disconnect_lua(lua_State* L) {
+    (void)L;
+    LSPDisconnect();
+    return 0;
+}
+
 extern "C" int luaopen_transport(lua_State* L) {
     lua_newtable(L);
     lua_pushcfunction(L, transport::transport_read);
@@ -184,6 +190,8 @@ extern "C" int luaopen_transport(lua_State* L) {
     lua_setfield(L, -2, "write");
     lua_pushcfunction(L, transport::transport_register_stdio_lua);
     lua_setfield(L, -2, "register_stdio");
+    lua_pushcfunction(L, transport_disconnect_lua);
+    lua_setfield(L, -2, "disconnect");
     return 1;
 }
 

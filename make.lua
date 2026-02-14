@@ -150,6 +150,28 @@ lm:copy "copy_lua-language-server-q" {
     outputs = "bin/lua-language-server-q" .. exe,
 }
 
+lm:lib "lualsp" {
+    deps = {
+        "source_bee",
+        "source_lua",
+        "lpeglabel",
+        "source_bootstrap_lib",
+        "source_transport",
+        includeCodeFormat and "code_format" or nil,
+    },
+    includes = {
+        "3rd/bee.lua",
+        "3rd/bee.lua/3rd/lua55",
+    },
+    sources = {
+        "make/modules.cpp",
+        "make/lsp_main.cpp",
+    },
+    defines = {
+        includeCodeFormat and 'CODE_FORMAT' or nil,
+    },
+}
+
 lm:copy "copy_bootstrap" {
     inputs = "make/bootstrap.lua",
     outputs = "bin/main.lua",
@@ -166,6 +188,7 @@ lm:phony "all" {
         "copy_lua-language-server",
         "lua-language-server-q",
         "copy_lua-language-server-q",
+        "lualsp",
         "copy_bootstrap",
     },
     windows = {

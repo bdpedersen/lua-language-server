@@ -271,6 +271,16 @@ function m.recieve(block)
     end
 end
 
+--- Shutdown all braves (in-process only). Push shutdown task to each, then wait for each thread to exit.
+function m.shutdownBraves()
+    for _, brave in pairs(m.allBraves) do
+        brave.taskCh:push('shutdown', 0, nil)
+    end
+    for _, brave in pairs(m.allBraves) do
+        thread.wait(brave.thread)
+    end
+end
+
 --- 检查伤亡情况
 function m.checkDead()
     while true do

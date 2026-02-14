@@ -196,6 +196,11 @@ function m.eventLoop()
 
     while true do
         if INPROCESS and LSP_SHUTDOWN then
+            local transport = require 'transport'
+            if transport.disconnect then
+                transport.disconnect()
+            end
+            pub.shutdownBraves()
             break
         end
         net.update()
